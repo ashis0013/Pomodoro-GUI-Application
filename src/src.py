@@ -1,5 +1,6 @@
 import tkinter as tk
 import math
+import subprocess
 
 info = open('../data/info.txt','r')
 info_map = {}
@@ -17,7 +18,7 @@ class Pomodoro(tk.Tk):
     def __init__(self,*args,**kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.geometry('400x300+0+0')
-        self.timer = focus_time
+        self.timer = 0
         self.running = False
         self.focus = True
         self.rounds = 0
@@ -39,7 +40,12 @@ class Pomodoro(tk.Tk):
 
     def tick_tock(self):
         if self.timer == 0:
-            if not self.focus: self.rounds = (self.rounds + 1)%cycle_lenght
+            if self.focus:
+                msg = 'You have focused for ' + str(focus_time/60) + ' minutes'
+                subprocess.Popen(['notify-send',msg])
+            if not self.focus:
+                self.rounds = (self.rounds + 1)%cycle_lenght
+                subprocess.Popen(['notify-send','Your break is over time for focus'])
             self.focus = not self.focus
             self.running = False
         if self.running:
@@ -50,11 +56,12 @@ class Pomodoro(tk.Tk):
     def start(self):
         if self.running: return
         self.running = True
-        if self.focus:
-            self.timer = focus_time
-        elif self.rounds+1 == cycle_lenght:
-            self.timer = long_rest
-        else: self.timer = short_rest
+        if self.timer == 0:
+            if self.focus:
+                self.timer = focus_time
+            elif self.rounds+1 == cycle_lenght:
+                self.timer = long_rest
+            else: self.timer = short_rest
         self.tick_tock()
     
     def stop(self):
